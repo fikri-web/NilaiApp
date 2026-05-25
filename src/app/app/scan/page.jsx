@@ -31,6 +31,7 @@ export default function OcrScanPage() {
   const [parsedData, setParsedData] = useState([]);
   const [template, setTemplate] = useState("simple");
   const [customColumns, setCustomColumns] = useState([]);
+  const [katalogSubjects, setKatalogSubjects] = useState(["B. Arab", "Akidah Akhlak"]);
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = "info") => {
@@ -56,6 +57,14 @@ export default function OcrScanPage() {
           if (savedCustomCols) {
             try {
               setCustomColumns(JSON.parse(savedCustomCols));
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          const savedKatalogSubjects = localStorage.getItem("nilai_katalog_subjects");
+          if (savedKatalogSubjects) {
+            try {
+              setKatalogSubjects(JSON.parse(savedKatalogSubjects));
             } catch (e) {
               console.error(e);
             }
@@ -177,7 +186,9 @@ export default function OcrScanPage() {
         const itemValues = {};
 
         if (template === "simple") {
-          itemValues.nilai = numericTokens[0] !== undefined ? numericTokens[0] : 0;
+          itemValues.n1 = numericTokens[0] !== undefined ? numericTokens[0] : 0;
+          itemValues.n2 = numericTokens[1] !== undefined ? numericTokens[1] : 0;
+          itemValues.n3 = numericTokens[2] !== undefined ? numericTokens[2] : 0;
         } else if (template === "rapor") {
           itemValues.h1 = numericTokens[0] !== undefined ? numericTokens[0] : 0;
           itemValues.h2 = numericTokens[1] !== undefined ? numericTokens[1] : 0;
@@ -193,6 +204,16 @@ export default function OcrScanPage() {
           customColumns.forEach((col, idx) => {
             itemValues[col] = numericTokens[idx] !== undefined ? numericTokens[idx] : 0;
           });
+        } else if (template === "katalog") {
+          let tokenIdx = 0;
+          katalogSubjects.forEach((subj) => {
+            itemValues[subj] = {
+              n1: numericTokens[tokenIdx] !== undefined ? numericTokens[tokenIdx] : 0,
+              n2: numericTokens[tokenIdx + 1] !== undefined ? numericTokens[tokenIdx + 1] : 0,
+              n3: numericTokens[tokenIdx + 2] !== undefined ? numericTokens[tokenIdx + 2] : 0
+            };
+            tokenIdx += 3;
+          });
         }
 
         parsed.push({ id, name, values: itemValues });
@@ -207,17 +228,34 @@ export default function OcrScanPage() {
   };
 
   const handleEditParsedValue = (id, fieldName, newVal) => {
-    setParsedData(parsedData.map((item) => 
-      item.id === id 
-        ? { 
-            ...item, 
-            values: { 
-              ...item.values, 
-              [fieldName]: parseFloat(newVal) || 0 
-            } 
-          } 
-        : item
-    ));
+    setParsedData(parsedData.map((item) => {
+      if (item.id === id) {
+        if (fieldName.endsWith("_n1") || fieldName.endsWith("_n2") || fieldName.endsWith("_n3")) {
+          const parts = fieldName.split("_");
+          const subKey = parts.pop();
+          const subj = parts.join("_");
+          const currentSubjVal = item.values[subj] || { n1: 0, n2: 0, n3: 0 };
+          return {
+            ...item,
+            values: {
+              ...item.values,
+              [subj]: {
+                ...currentSubjVal,
+                [subKey]: parseFloat(newVal) || 0
+              }
+            }
+          };
+        }
+        return {
+          ...item,
+          values: {
+            ...item.values,
+            [fieldName]: parseFloat(newVal) || 0
+          }
+        };
+      }
+      return item;
+    }));
   };
 
   const handleDeleteRow = (id) => {
@@ -235,9 +273,22 @@ export default function OcrScanPage() {
         };
 
         if (template === "simple") {
-          const val = item.values.nilai || 0;
-          gradeEntry.nilai = val;
-          gradeEntry.rata = val;
+          const val1 = item.values.n1 || 0;
+          const val2 = item.values.n2 || 0;
+          const val3 = item.values.n3 || 0;
+          
+          const sum = val1 + val2 + val3;
+          const avg = parseFloat((sum / 3).toFixed(1));
+          
+          const simpleData = {
+            n1: val1,
+            n2: val2,
+            n3: val3,
+            jumlah: sum
+          };
+          
+          gradeEntry.nilai = JSON.stringify(simpleData);
+          gradeEntry.rata = avg;
         } else if (template === "rapor") {
           const h1 = item.values.h1 || 0;
           const h2 = item.values.h2 || 0;
@@ -282,6 +333,16 @@ export default function OcrScanPage() {
           };
           
           gradeEntry.nilai = JSON.stringify(mapelData);
+          gradeEntry.rata = avg;
+        } else if (template === "katalog") {
+          let totalSum = 0;
+          katalogSubjects.forEach((subj) => {
+            const sVals = item.values[subj] || { n1: 0, n2: 0, n3: 0 };
+            totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+          });
+          const avg = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
+          
+          gradeEntry.nilai = JSON.stringify(item.values);
           gradeEntry.rata = avg;
         } else {
           const valuesArray = Object.values(item.values).map((v) => parseFloat(v) || 0);
@@ -337,6 +398,7 @@ export default function OcrScanPage() {
               />
               
               {imagePreview ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img 
                   src={imagePreview} 
                   alt="Review" 
@@ -400,8 +462,8 @@ export default function OcrScanPage() {
                 </div>
                 {template === "simple" && (
                   <>
-                    <div>Format: [Nama] [Nilai]</div>
-                    <div className="text-gray-500 italic">Contoh: ABDI SANJAYA 85</div>
+                    <div>Format: [Nama] [N1] [N2] [N3]</div>
+                    <div className="text-gray-500 italic">Contoh: ABDI SANJAYA 85 90 80</div>
                   </>
                 )}
                 {template === "rapor" && (
@@ -421,6 +483,14 @@ export default function OcrScanPage() {
                     <div>Format: [Nama] {customColumns.map(col => `[${col}]`).join(" ")}</div>
                     <div className="text-gray-500 italic">
                       Contoh: ABDI SANJAYA {customColumns.map((_, idx) => 80 + idx).join(" ")}
+                    </div>
+                  </>
+                )}
+                {template === "katalog" && (
+                  <>
+                    <div>Format: [Nama] {katalogSubjects.map(subj => `[${subj} 1] [${subj} 2] [${subj} 3]`).join(" ")}</div>
+                    <div className="text-gray-500 italic">
+                      Contoh: ABDI SANJAYA {katalogSubjects.map(() => "80 85 90").join(" ")}
                     </div>
                   </>
                 )}
@@ -456,7 +526,11 @@ export default function OcrScanPage() {
                         <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[10px] font-bold uppercase text-[#4a5568] tracking-wider select-none">
                           <th className="py-2.5 px-4">Nama Siswa</th>
                           {template === "simple" && (
-                            <th className="py-2.5 px-4 text-center w-24">Nilai</th>
+                             <>
+                               <th className="py-2.5 px-2 text-center w-14">N1</th>
+                               <th className="py-2.5 px-2 text-center w-14">N2</th>
+                               <th className="py-2.5 px-2 text-center w-14">N3</th>
+                             </>
                           )}
                           {template === "rapor" && (
                             <>
@@ -475,6 +549,13 @@ export default function OcrScanPage() {
                               <th className="py-2.5 px-2 text-center w-14">N3</th>
                             </>
                           )}
+                          {template === "katalog" && katalogSubjects.map((subj) => (
+                             <React.Fragment key={subj}>
+                               <th className="py-2.5 px-1 text-center w-12">{subj} 1</th>
+                               <th className="py-2.5 px-1 text-center w-12">{subj} 2</th>
+                               <th className="py-2.5 px-1 text-center w-12">{subj} 3</th>
+                             </React.Fragment>
+                          ))}
                           {template === "kosong" && customColumns.map((col) => (
                             <th key={col} className="py-2.5 px-2 text-center w-14">{col}</th>
                           ))}
@@ -493,14 +574,18 @@ export default function OcrScanPage() {
                               />
                             </td>
                             {template === "simple" && (
-                              <td className="py-2 px-3 text-center">
-                                <input 
-                                  type="number"
-                                  value={item.values.nilai}
-                                  onChange={(e) => handleEditParsedValue(item.id, "nilai", e.target.value)}
-                                  className="w-16 px-2 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
-                                />
-                              </td>
+                              <>
+                                {["n1", "n2", "n3"].map((fld) => (
+                                  <td key={fld} className="py-2 px-1 text-center">
+                                    <input 
+                                      type="number"
+                                      value={item.values[fld] !== undefined ? item.values[fld] : 0}
+                                      onChange={(e) => handleEditParsedValue(item.id, fld, e.target.value)}
+                                      className="w-14 px-1 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
+                                    />
+                                  </td>
+                                ))}
+                              </>
                             )}
                             {template === "rapor" && (
                               <>
@@ -508,7 +593,7 @@ export default function OcrScanPage() {
                                   <td key={fld} className="py-2 px-1 text-center">
                                     <input 
                                       type="number"
-                                      value={item.values[fld]}
+                                      value={item.values[fld] !== undefined ? item.values[fld] : 0}
                                       onChange={(e) => handleEditParsedValue(item.id, fld, e.target.value)}
                                       className="w-12 px-1 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
                                     />
@@ -522,7 +607,7 @@ export default function OcrScanPage() {
                                   <td key={fld} className="py-2 px-1 text-center">
                                     <input 
                                       type="number"
-                                      value={item.values[fld]}
+                                      value={item.values[fld] !== undefined ? item.values[fld] : 0}
                                       onChange={(e) => handleEditParsedValue(item.id, fld, e.target.value)}
                                       className="w-14 px-1 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
                                     />
@@ -530,6 +615,37 @@ export default function OcrScanPage() {
                                 ))}
                               </>
                             )}
+                            {template === "katalog" && katalogSubjects.map((subj) => {
+                              const sVals = item.values[subj] || { n1: 0, n2: 0, n3: 0 };
+                              return (
+                                <React.Fragment key={subj}>
+                                  <td className="py-2 px-1 text-center">
+                                    <input 
+                                      type="number"
+                                      value={sVals.n1 !== undefined ? sVals.n1 : 0}
+                                      onChange={(e) => handleEditParsedValue(item.id, `${subj}_n1`, e.target.value)}
+                                      className="w-10 px-1 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
+                                    />
+                                  </td>
+                                  <td className="py-2 px-1 text-center">
+                                    <input 
+                                      type="number"
+                                      value={sVals.n2 !== undefined ? sVals.n2 : 0}
+                                      onChange={(e) => handleEditParsedValue(item.id, `${subj}_n2`, e.target.value)}
+                                      className="w-10 px-1 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
+                                    />
+                                  </td>
+                                  <td className="py-2 px-1 text-center">
+                                    <input 
+                                      type="number"
+                                      value={sVals.n3 !== undefined ? sVals.n3 : 0}
+                                      onChange={(e) => handleEditParsedValue(item.id, `${subj}_n3`, e.target.value)}
+                                      className="w-10 px-1 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
+                                    />
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
                             {template === "kosong" && customColumns.map((col) => (
                               <td key={col} className="py-2 px-1 text-center">
                                 <input 
@@ -567,7 +683,7 @@ export default function OcrScanPage() {
                 <div className="text-center py-16 px-6 border border-dashed border-[#babecc]/80 rounded-xl bg-white/10 select-none">
                   <Camera className="w-8 h-8 text-[#4a5568]/30 mx-auto mb-3" />
                   <p className="text-sm font-semibold text-[#4a5568]">Belum ada hasil pemindaian.</p>
-                  <p className="text-xs text-[#4a5568]/60 mt-1">Pilih gambar catatan nilai di kolom kiri lalu tekan "Mulai Scan Gambar".</p>
+                  <p className="text-xs text-[#4a5568]/60 mt-1">Pilih gambar catatan nilai di kolom kiri lalu tekan &quot;Mulai Scan Gambar&quot;.</p>
                 </div>
               )}
 

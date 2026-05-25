@@ -69,5 +69,28 @@ export const gradesHelper = {
       localStorage.setItem("nilai_grades", JSON.stringify(allGrades));
       return true;
     }
+  },
+
+  async updateGrade(userId, gradeId, updatedFields) {
+    if (isSupabaseConfigured()) {
+      const { data, error } = await supabase
+        .from("nilai")
+        .update(updatedFields)
+        .eq("id", gradeId)
+        .eq("user_id", userId)
+        .select();
+      if (error) throw error;
+      return data[0];
+    } else {
+      const allGrades = JSON.parse(localStorage.getItem("nilai_grades") || "[]");
+      const idx = allGrades.findIndex((g) => g.id === gradeId && g.user_id === userId);
+      if (idx !== -1) {
+        allGrades[idx] = { ...allGrades[idx], ...updatedFields };
+        localStorage.setItem("nilai_grades", JSON.stringify(allGrades));
+        return allGrades[idx];
+      }
+      throw new Error("Data tidak ditemukan");
+    }
   }
 };
+

@@ -73,7 +73,7 @@ export default function LoginPage() {
               id="email"
               label="Alamat Email"
               type="email"
-              placeholder="nama@sekolah.sch.id"
+              placeholder="nama@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

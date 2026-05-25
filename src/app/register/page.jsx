@@ -16,20 +16,6 @@ export default function RegisterPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const [forceLocal, setForceLocal] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setForceLocal(localStorage.getItem("nilai_force_local") === "true");
-    }
-  }, []);
-
-  const handleForceLocalChange = (val) => {
-    setForceLocal(val);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("nilai_force_local", val ? "true" : "false");
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,7 +78,7 @@ export default function RegisterPage() {
               id="email"
               label="Alamat Email"
               type="email"
-              placeholder="nama@sekolah.sch.id"
+              placeholder="nama@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -117,30 +103,6 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-
-            {/* Offline Mode Checkbox */}
-            <div className="flex flex-col gap-2 pt-1">
-              <div className="flex items-center gap-2.5 select-none">
-                <input
-                  id="force-local-checkbox-reg"
-                  type="checkbox"
-                  checked={forceLocal}
-                  onChange={(e) => handleForceLocalChange(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#babecc] text-[#3b82f6] focus:ring-[#3b82f6]/40 cursor-pointer"
-                />
-                <label 
-                  htmlFor="force-local-checkbox-reg" 
-                  className="text-xs font-semibold text-[#4a5568] cursor-pointer hover:text-[#2d3436]"
-                >
-                  Gunakan Mode Offline / Penyimpanan Lokal
-                </label>
-              </div>
-              {forceLocal && (
-                <div className="p-3 rounded-lg bg-[#e0e5ec]/50 border border-[#babecc]/40 text-[#4a5568] text-[10px] leading-relaxed">
-                  ℹ️ <strong>Mode Offline Aktif</strong>: Pendaftaran akun baru disimpan langsung di browser Anda. Tidak membutuhkan database online Supabase. Cocok jika Anda terkendala verifikasi email atau limit Supabase.
-                </div>
-              )}
-            </div>
 
             {errorMsg && (
               <div className="p-3.5 rounded-lg bg-red-100 border border-red-300 text-red-700 font-sans text-xs flex items-start gap-2.5 shadow-inner">

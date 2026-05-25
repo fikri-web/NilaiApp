@@ -31,6 +31,8 @@ export default function DashboardApp() {
   const [toast, setToast] = useState(null);
   const [template, setTemplate] = useState("rapor");
   const [customColumns, setCustomColumns] = useState([]);
+  const [katalogSubjects, setKatalogSubjects] = useState(["B. Arab", "Akidah Akhlak"]);
+  const [newSubjectInput, setNewSubjectInput] = useState("");
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
@@ -96,6 +98,14 @@ export default function DashboardApp() {
           if (savedCustomColumns) {
             try {
               setCustomColumns(JSON.parse(savedCustomColumns));
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          const savedKatalogSubjects = localStorage.getItem("nilai_katalog_subjects");
+          if (savedKatalogSubjects) {
+            try {
+              setKatalogSubjects(JSON.parse(savedKatalogSubjects));
             } catch (e) {
               console.error(e);
             }
@@ -167,6 +177,24 @@ export default function DashboardApp() {
               nilai: JSON.stringify({ n1: 92, n2: 95, n3: 96, jumlah: 283 }),
               rata: 94.3,
               created_at: new Date(Date.now() - 10000).toISOString()
+            },
+            {
+              id: "grade_k1",
+              user_id: sessionUser.id,
+              nama: "ABDI SANJAYA",
+              template_type: "katalog",
+              nilai: JSON.stringify({ "B. Arab": 85, "Akidah Akhlak": 90 }),
+              rata: 87.5,
+              created_at: new Date(Date.now() - 5000).toISOString()
+            },
+            {
+              id: "grade_k2",
+              user_id: sessionUser.id,
+              nama: "ABRAHAM MS",
+              template_type: "katalog",
+              nilai: JSON.stringify({ "B. Arab": 78, "Akidah Akhlak": 82 }),
+              rata: 80.0,
+              created_at: new Date(Date.now() - 4000).toISOString()
             }
           ];
           localStorage.setItem("nilai_grades", JSON.stringify(initialMock));
@@ -252,6 +280,29 @@ export default function DashboardApp() {
     setCustomValues(cleanValues);
   };
 
+  const handleAddKatalogSubject = (e) => {
+    e.preventDefault();
+    if (!newSubjectInput.trim()) return;
+    if (katalogSubjects.includes(newSubjectInput.trim())) return;
+    const updated = [...katalogSubjects, newSubjectInput.trim()];
+    setKatalogSubjects(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nilai_katalog_subjects", JSON.stringify(updated));
+    }
+    setNewSubjectInput("");
+  };
+
+  const handleDeleteKatalogSubject = (subj) => {
+    const updated = katalogSubjects.filter((s) => s !== subj);
+    setKatalogSubjects(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nilai_katalog_subjects", JSON.stringify(updated));
+    }
+    const cleanValues = { ...customValues };
+    delete cleanValues[subj];
+    setCustomValues(cleanValues);
+  };
+
   const handleAddStudent = async (e) => {
     e.preventDefault();
     if (!studentName.trim()) return;
@@ -262,9 +313,22 @@ export default function DashboardApp() {
     };
 
     if (template === "simple") {
-      const val = parseFloat(simpleGrade) || 0;
-      gradeEntry.nilai = val;
-      gradeEntry.rata = val;
+      const val1 = parseFloat(harian1) || 0;
+      const val2 = parseFloat(harian2) || 0;
+      const val3 = parseFloat(harian3) || 0;
+
+      const sum = val1 + val2 + val3;
+      const avg = parseFloat((sum / 3).toFixed(1));
+
+      const simpleData = {
+        n1: val1,
+        n2: val2,
+        n3: val3,
+        jumlah: sum
+      };
+
+      gradeEntry.nilai = JSON.stringify(simpleData);
+      gradeEntry.rata = avg;
     } else if (template === "rapor") {
       const h1 = parseFloat(harian1) || 0;
       const h2 = parseFloat(harian2) || 0;
@@ -310,12 +374,27 @@ export default function DashboardApp() {
 
       gradeEntry.nilai = JSON.stringify(mapelData);
       gradeEntry.rata = avg;
-    } else {
+    } else if (template === "kosong") {
       const valuesArray = Object.values(customValues).map((v) => parseFloat(v) || 0);
       const sum = valuesArray.reduce((acc, curr) => acc + curr, 0);
       const avg = valuesArray.length > 0 ? parseFloat((sum / valuesArray.length).toFixed(1)) : 0;
 
       gradeEntry.nilai = JSON.stringify(customValues);
+      gradeEntry.rata = avg;
+    } else if (template === "katalog") {
+      const catalogData = {};
+      let totalSum = 0;
+      katalogSubjects.forEach((subj) => {
+        const sVals = customValues[subj] || {};
+        const n1 = parseFloat(sVals.n1) || 0;
+        const n2 = parseFloat(sVals.n2) || 0;
+        const n3 = parseFloat(sVals.n3) || 0;
+        catalogData[subj] = { n1, n2, n3 };
+        totalSum += (n1 + n2 + n3) / 3;
+      });
+      const avg = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
+
+      gradeEntry.nilai = JSON.stringify(catalogData);
       gradeEntry.rata = avg;
     }
 
@@ -359,7 +438,12 @@ export default function DashboardApp() {
   };
 
   const filteredGrades = grades.filter((g) => g.template_type === template);
-  const rankedGrades = [...filteredGrades].sort((a, b) => b.rata - a.rata);
+  const rankedGrades = [...filteredGrades].sort((a, b) => {
+    if (template === "simple") {
+      return new Date(a.created_at) - new Date(b.created_at);
+    }
+    return b.rata - a.rata;
+  });
 
   // Apply Styles Helper for Excel Generation — Plain / Polos style
   const applyExcelStyles = (worksheet, templateType, headerStartRow, customColCount = 0) => {
@@ -393,13 +477,13 @@ export default function DashboardApp() {
       // Determine row type
       const isHeader = templateType === "rapor"
         ? (rowIndex === 7 || rowIndex === 8)
-        : templateType === "mapel"
+        : (templateType === "mapel" || templateType === "katalog")
           ? (rowIndex === 5 || rowIndex === 6)
           : (rowIndex === headerStartRow);
 
       const isMetadata = templateType === "rapor"
         ? (rowIndex < 7)
-        : templateType === "mapel"
+        : (templateType === "mapel" || templateType === "katalog")
           ? (rowIndex < 5)
           : (rowIndex < headerStartRow);
 
@@ -460,23 +544,45 @@ export default function DashboardApp() {
 
     if (template === "simple") {
       const metaRows = [
-        ["REKAPITULASI NILAI SISWA"],
+        ["Daftar Nilai"],
+        [schoolName.toUpperCase()],
         [],
+        ["Kelas :", classNameVal],
+        []
       ];
-      const tableHeaders = ["Peringkat", "Nama Siswa", "Nilai"];
-      const dataRows = rankedGrades.map((g, idx) => [
-        idx + 1,
-        g.nama.toUpperCase(),
-        g.nilai
-      ]);
-      const finalData = [...metaRows, tableHeaders, ...dataRows];
+      const headerRow1 = ["No", "Nama", subjectName, "", ""];
+      const headerRow2 = ["", "", "1", "2", "3"];
+      const dataRows = rankedGrades.map((g, idx) => {
+        let simpleVals = {};
+        if (g.nilai) {
+          try {
+            simpleVals = JSON.parse(g.nilai);
+          } catch {
+            simpleVals = {};
+          }
+        }
+        return [
+          idx + 1,
+          g.nama.toUpperCase(),
+          simpleVals.n1 || 0,
+          simpleVals.n2 || 0,
+          simpleVals.n3 || 0
+        ];
+      });
+
+      const finalData = [...metaRows, headerRow1, headerRow2, ...dataRows];
       worksheet = XLSX.utils.aoa_to_sheet(finalData);
+
       worksheet["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
+        { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } },
+        { s: { r: 5, c: 1 }, e: { r: 6, c: 1 } },
+        { s: { r: 5, c: 2 }, e: { r: 5, c: 4 } }
       ];
 
-      applyExcelStyles(worksheet, "simple", 2);
-      filename = `Rekap_Nilai_Sederhana.xlsx`;
+      applyExcelStyles(worksheet, "mapel", 5);
+      filename = `Rekap_Nilai_Sederhana_${subjectName}_${classNameVal}.xlsx`;
 
     } else if (template === "rapor") {
       const metaRows = [
@@ -590,7 +696,7 @@ export default function DashboardApp() {
       applyExcelStyles(worksheet, "mapel", 5);
       filename = `Rekap_Nilai_${subjectName}_${classNameVal}.xlsx`;
 
-    } else {
+    } else if (template === "kosong") {
       const metaRows = [
         ["REKAPITULASI NILAI KUSTOM"],
         [],
@@ -624,6 +730,85 @@ export default function DashboardApp() {
 
       applyExcelStyles(worksheet, "kosong", 2, customColumns.length);
       filename = `Rekap_Nilai_Kustom.xlsx`;
+    } else if (template === "katalog") {
+      const metaRows = [
+        ["DAFTAR NILAI KATALOG (LEGER)"],
+        [schoolName.toUpperCase()],
+        [],
+        ["Kelas :", classNameVal],
+        []
+      ];
+
+      const headerRow1 = ["No", "Nama Siswa"];
+      katalogSubjects.forEach((s) => {
+        headerRow1.push(s, "", "");
+      });
+      headerRow1.push("Rata-rata", "Jumlah", "Ranking");
+
+      const headerRow2 = ["", ""];
+      katalogSubjects.forEach(() => {
+        headerRow2.push("1", "2", "3");
+      });
+      headerRow2.push("", "", "");
+
+      const dataRows = rankedGrades.map((g, idx) => {
+        let studentVals = {};
+        if (g.nilai) {
+          try {
+            studentVals = JSON.parse(g.nilai);
+          } catch {
+            studentVals = {};
+          }
+        }
+        const row = [
+          idx + 1,
+          g.nama.toUpperCase()
+        ];
+        let totalSum = 0;
+        katalogSubjects.forEach((subj) => {
+          let sVals = studentVals[subj];
+          if (typeof sVals !== "object" || sVals === null) {
+            sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+          }
+          row.push(sVals.n1 || 0, sVals.n2 || 0, sVals.n3 || 0);
+          totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+        });
+        row.push(
+          g.rata,
+          parseFloat(totalSum.toFixed(1)),
+          idx + 1
+        );
+        return row;
+      });
+
+      const finalData = [...metaRows, headerRow1, headerRow2, ...dataRows];
+      worksheet = XLSX.utils.aoa_to_sheet(finalData);
+
+      const totalCols = 2 + katalogSubjects.length * 3 + 3;
+      const merges = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: totalCols - 1 } },
+        { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } }, // No
+        { s: { r: 5, c: 1 }, e: { r: 6, c: 1 } }  // Nama
+      ];
+
+      katalogSubjects.forEach((_, i) => {
+        merges.push({
+          s: { r: 5, c: 2 + i * 3 },
+          e: { r: 5, c: 4 + i * 3 }
+        });
+      });
+
+      const startIdx = 2 + katalogSubjects.length * 3;
+      merges.push(
+        { s: { r: 5, c: startIdx }, e: { r: 6, c: startIdx } },     // Rata-rata
+        { s: { r: 5, c: startIdx + 1 }, e: { r: 6, c: startIdx + 1 } }, // Jumlah
+        { s: { r: 5, c: startIdx + 2 }, e: { r: 6, c: startIdx + 2 } }  // Ranking
+      );
+
+      worksheet["!merges"] = merges;
+      applyExcelStyles(worksheet, "katalog", 5);
+      filename = `Rekap_Nilai_Katalog_${classNameVal}.xlsx`;
     }
 
     const workbook = XLSX.utils.book_new();
@@ -709,6 +894,13 @@ export default function DashboardApp() {
               Template Mapel (Dinamis)
             </Button>
             <Button
+              variant={template === "katalog" ? "accent" : "primary"}
+              onClick={() => handleTemplateChange("katalog")}
+              className="px-4 py-2"
+            >
+              Template Mapel Lengkap
+            </Button>
+            <Button
               variant={template === "kosong" ? "accent" : "primary"}
               onClick={() => handleTemplateChange("kosong")}
               className="px-4 py-2"
@@ -776,7 +968,7 @@ export default function DashboardApp() {
       )}
 
       {/* Mapel Settings panel */}
-      {template === "mapel" && (
+      {(template === "simple" || template === "mapel") && (
         <div className="max-w-7xl w-full mx-auto mb-6">
           <Panel variant="raised" className="bg-[#f0f2f5] p-5" contentClassName="flex flex-wrap gap-4 items-center justify-between w-full">
             <div className="flex-1 min-w-[220px]">
@@ -857,6 +1049,50 @@ export default function DashboardApp() {
             </Panel>
           )}
 
+          {/* Katalog Subject Builder */}
+          {template === "katalog" && (
+            <Panel variant="raised" className="bg-[#f0f2f5]" contentClassName="flex flex-col gap-4 w-full">
+              <div className="flex items-center gap-2 border-b border-[#babecc]/40 pb-2">
+                <Settings className="w-4 h-4 text-[#3b82f6]" />
+                <h3 className="font-extrabold text-xs uppercase text-[#2d3436]">Kelola Mata Pelajaran</h3>
+              </div>
+
+              <form onSubmit={handleAddKatalogSubject} className="flex gap-2">
+                <Input
+                  id="new-subject-name"
+                  placeholder="Nama mata pelajaran baru..."
+                  value={newSubjectInput}
+                  onChange={(e) => setNewSubjectInput(e.target.value)}
+                />
+                <Button type="submit" variant="accent" className="shrink-0">
+                  Tambah
+                </Button>
+              </form>
+
+              {katalogSubjects.length > 0 ? (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {katalogSubjects.map((subj) => (
+                    <span
+                      key={subj}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#d1d9e6]/40 text-xs font-semibold border border-[#babecc]/50 shadow-sm"
+                    >
+                      {subj}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteKatalogSubject(subj)}
+                        className="text-red-500 hover:text-red-700 font-bold ml-1"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-xs text-[#4a5568]/60 italic">Belum ada mata pelajaran. Tambah di atas.</span>
+              )}
+            </Panel>
+          )}
+
           {/* Form Entry */}
           <Panel variant="raised" className="bg-[#f0f2f5]" contentClassName="flex flex-col gap-5 w-full">
             <div className="flex items-center justify-between border-b border-[#babecc]/40 pb-3">
@@ -879,19 +1115,7 @@ export default function DashboardApp() {
                 required
               />
 
-              {template === "simple" && (
-                <Input
-                  id="simple-grade"
-                  label="Nilai Siswa"
-                  placeholder="e.g. 85"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={simpleGrade}
-                  onChange={(e) => setSimpleGrade(e.target.value)}
-                  required
-                />
-              )}
+
 
               {template === "rapor" && (
                 <>
@@ -966,7 +1190,7 @@ export default function DashboardApp() {
                 </>
               )}
 
-              {template === "mapel" && (
+              {(template === "simple" || template === "mapel") && (
                 <>
                   <span className="text-xs font-extrabold uppercase text-[#4a5568] -mb-1 block">Nilai {subjectName}</span>
                   <div className="grid grid-cols-3 gap-2">
@@ -1022,6 +1246,62 @@ export default function DashboardApp() {
                 />
               ))}
 
+              {template === "katalog" && katalogSubjects.map((subj) => (
+                <div key={subj} className="space-y-1">
+                  <span className="text-xs font-extrabold uppercase text-[#4a5568] -mb-1 block">Nilai {subj}</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Input
+                      id={`katalog-${subj}-1`}
+                      placeholder="1"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={customValues[subj]?.n1 || ""}
+                      onChange={(e) => setCustomValues({
+                        ...customValues,
+                        [subj]: {
+                          ...(customValues[subj] || {}),
+                          n1: e.target.value
+                        }
+                      })}
+                      required
+                    />
+                    <Input
+                      id={`katalog-${subj}-2`}
+                      placeholder="2"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={customValues[subj]?.n2 || ""}
+                      onChange={(e) => setCustomValues({
+                        ...customValues,
+                        [subj]: {
+                          ...(customValues[subj] || {}),
+                          n2: e.target.value
+                        }
+                      })}
+                      required
+                    />
+                    <Input
+                      id={`katalog-${subj}-3`}
+                      placeholder="3"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={customValues[subj]?.n3 || ""}
+                      onChange={(e) => setCustomValues({
+                        ...customValues,
+                        [subj]: {
+                          ...(customValues[subj] || {}),
+                          n3: e.target.value
+                        }
+                      })}
+                      required
+                    />
+                  </div>
+                </div>
+              ))}
+
               <Button type="submit" variant="accent" className="w-full py-3 mt-2 flex items-center justify-center gap-2">
                 <Plus className="w-4 h-4" />
                 Tambah Data
@@ -1070,7 +1350,7 @@ export default function DashboardApp() {
               )}
 
               {/* Visual Spreadsheet Header for Mapel Template */}
-              {template === "mapel" && (
+              {(template === "simple" || template === "mapel") && (
                 <div className="text-center font-sans space-y-1 select-none border border-[#babecc]/35 bg-[#e0e5ec]/10 p-4 rounded-lg mb-6 shadow-inner">
                   <h3 className="text-xs font-black uppercase text-[#2d3436] tracking-wider">Daftar Nilai</h3>
                   <h4 className="text-sm font-extrabold text-[#4a5568] uppercase">{schoolName}</h4>
@@ -1081,11 +1361,27 @@ export default function DashboardApp() {
                 </div>
               )}
 
+              {/* Visual Spreadsheet Header for Katalog Template */}
+              {template === "katalog" && (
+                <div className="text-center font-sans space-y-1 select-none border border-[#babecc]/35 bg-[#e0e5ec]/10 p-4 rounded-lg mb-6 shadow-inner">
+                  <h3 className="text-xs font-black uppercase text-[#2d3436] tracking-wider">DAFTAR NILAI KATALOG (LEGER)</h3>
+                  <h4 className="text-sm font-extrabold text-[#4a5568] uppercase">{schoolName}</h4>
+                  <div className="flex flex-col sm:flex-row justify-center sm:gap-8 text-xs font-semibold text-[#4a5568] pt-1">
+                    <span>Kelas : <span className="text-[#2d3436] font-bold">{classNameVal}</span></span>
+                    <span className="max-w-[400px] truncate" title={katalogSubjects.join(", ")}>
+                      Mata Pelajaran : <span className="text-[#3b82f6] font-bold uppercase">{katalogSubjects.length > 0 ? katalogSubjects.join(", ") : "Belum ada"}</span>
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center justify-between border-b border-[#babecc]/40 pb-4 gap-4">
                 <div>
                   <h2 className="font-extrabold text-md uppercase text-[#2d3436] tracking-wide">Daftar Nilai Siswa</h2>
                   <span className="text-[9px] text-[#4a5568] uppercase font-bold tracking-wider">
-                    Peringkat Diurutkan Berdasarkan Nilai Rata-rata/Rapor Tertinggi
+                    {template === "simple"
+                      ? "Data Diurutkan Berdasarkan Waktu Pembuatan"
+                      : "Peringkat Diurutkan Berdasarkan Nilai Rata-rata/Rapor Tertinggi"}
                   </span>
                 </div>
 
@@ -1128,6 +1424,24 @@ export default function DashboardApp() {
                         </>
                       )}
 
+                      {template === "simple" && (
+                        <>
+                          <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[10px] font-bold uppercase text-[#4a5568] tracking-wider select-none">
+                            <th className="py-2.5 px-3 text-center w-12" rowSpan={2}>No</th>
+                            <th className="py-2.5 px-4" rowSpan={2}>Nama</th>
+                            <th className="py-1 px-2 text-center border-l border-r border-[#babecc]/40 bg-[#e0e5ec]/30" colSpan={3}>
+                              {subjectName || "Mata Pelajaran"}
+                            </th>
+                            <th className="py-2.5 px-3 text-center w-16" rowSpan={2}>Aksi</th>
+                          </tr>
+                          <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[9px] font-bold uppercase text-[#4a5568] tracking-wider select-none text-right">
+                            <th className="py-1 px-2 border-l border-[#babecc]/30 w-12 text-center">1</th>
+                            <th className="py-1 px-2 text-center w-12">2</th>
+                            <th className="py-1 px-2 border-r border-[#babecc]/30 text-center w-12">3</th>
+                          </tr>
+                        </>
+                      )}
+
                       {template === "mapel" && (
                         <>
                           <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[10px] font-bold uppercase text-[#4a5568] tracking-wider select-none">
@@ -1149,11 +1463,37 @@ export default function DashboardApp() {
                         </>
                       )}
 
-                      {template !== "rapor" && template !== "mapel" && (
+                      {template === "katalog" && (
+                        <>
+                          <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[10px] font-bold uppercase text-[#4a5568] tracking-wider select-none">
+                            <th className="py-2.5 px-3 text-center w-12" rowSpan={2}>No</th>
+                            <th className="py-2.5 px-4" rowSpan={2}>Nama Lengkap</th>
+                            {katalogSubjects.map((subj) => (
+                              <th key={subj} className="py-1 px-2 text-center border-l border-r border-[#babecc]/40 bg-[#e0e5ec]/30" colSpan={3}>
+                                {subj}
+                              </th>
+                            ))}
+                            <th className="py-2.5 px-3 text-right w-20" rowSpan={2}>Rata-rata</th>
+                            <th className="py-2.5 px-3 text-right w-20" rowSpan={2}>Jumlah</th>
+                            <th className="py-2.5 px-3 text-center w-20 font-black" rowSpan={2}>Ranking</th>
+                            <th className="py-2.5 px-3 text-center w-16" rowSpan={2}>Aksi</th>
+                          </tr>
+                          <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[9px] font-bold uppercase text-[#4a5568] tracking-wider select-none text-right text-[#4a5568]/80">
+                            {katalogSubjects.map((subj) => (
+                              <React.Fragment key={subj}>
+                                <th className="py-1 px-2 border-l border-[#babecc]/30 w-10 text-center">1</th>
+                                <th className="py-1 px-2 text-center w-10">2</th>
+                                <th className="py-1 px-2 border-r border-[#babecc]/30 text-center w-10">3</th>
+                              </React.Fragment>
+                            ))}
+                          </tr>
+                        </>
+                      )}
+
+                      {template !== "rapor" && template !== "simple" && template !== "mapel" && template !== "katalog" && (
                         <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[10px] font-bold uppercase text-[#4a5568] tracking-wider select-none">
                           <th className="py-3 px-4 text-center w-12">No</th>
                           <th className="py-3 px-4">Nama Lengkap Siswa</th>
-                          {template === "simple" && <th className="py-3 px-4 text-right w-24">Nilai</th>}
                           {template === "kosong" && (
                             <>
                               {customColumns.map((col) => (
@@ -1169,11 +1509,18 @@ export default function DashboardApp() {
                     <tbody>
                       {rankedGrades.map((item, index) => {
                         const rank = index + 1;
+                        let simpleVals = {};
                         let raporVals = {};
                         let mapelVals = {};
                         let customItemVals = {};
 
-                        if (template === "rapor" && item.nilai) {
+                        if (template === "simple" && item.nilai) {
+                          try {
+                            simpleVals = JSON.parse(item.nilai);
+                          } catch {
+                            simpleVals = { n1: parseFloat(item.nilai) || 0, n2: 0, n3: 0 };
+                          }
+                        } else if (template === "rapor" && item.nilai) {
                           try {
                             raporVals = JSON.parse(item.nilai);
                           } catch {
@@ -1185,7 +1532,7 @@ export default function DashboardApp() {
                           } catch {
                             mapelVals = {};
                           }
-                        } else if (template === "kosong" && item.nilai) {
+                        } else if ((template === "kosong" || template === "katalog") && item.nilai) {
                           try {
                             customItemVals = JSON.parse(item.nilai);
                           } catch {
@@ -1213,14 +1560,123 @@ export default function DashboardApp() {
 
                             {/* Name Row */}
                             <td className="py-3 px-4 font-semibold uppercase">
-                              {item.nama}
+                              <input
+                                type="text"
+                                className="w-full bg-transparent border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none px-1 py-0.5 rounded transition-all uppercase font-semibold text-[#2d3436]"
+                                defaultValue={item.nama}
+                                onBlur={async (e) => {
+                                  const newNama = e.target.value.trim().toUpperCase();
+                                  if (newNama && newNama !== item.nama) {
+                                    try {
+                                      await gradesHelper.updateGrade(user.id, item.id, { nama: newNama });
+                                      const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nama: newNama } : g);
+                                      setGrades(updatedGrades);
+                                      showToast("Nama siswa berhasil diperbarui!", "success");
+                                    } catch (err) {
+                                      showToast("Gagal memperbarui nama: " + err.message, "error");
+                                    }
+                                  }
+                                }}
+                              />
                             </td>
 
-                            {/* Simple Template Score cell */}
+                            {/* Simple Template cells */}
                             {template === "simple" && (
-                              <td className="py-3.5 px-4 text-right font-bold text-sm text-[#3b82f6]">
-                                {item.nilai}
-                              </td>
+                              <>
+                                <td className="py-3 px-2 text-center text-[#4a5568]">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-12 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                    defaultValue={simpleVals.n1 !== undefined ? simpleVals.n1 : 0}
+                                    onBlur={async (e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      if (newVal !== simpleVals.n1) {
+                                        const updatedNilai = {
+                                          ...simpleVals,
+                                          n1: newVal,
+                                          jumlah: newVal + (simpleVals.n2 || 0) + (simpleVals.n3 || 0)
+                                        };
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        try {
+                                          await gradesHelper.updateGrade(user.id, item.id, {
+                                            nilai: JSON.stringify(updatedNilai),
+                                            rata: updatedRata
+                                          });
+                                          const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
+                                          setGrades(updatedGrades);
+                                          showToast("Nilai 1 berhasil diperbarui!", "success");
+                                        } catch (err) {
+                                          showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </td>
+                                <td className="py-3 px-2 text-center text-[#4a5568]">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-12 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                    defaultValue={simpleVals.n2 !== undefined ? simpleVals.n2 : 0}
+                                    onBlur={async (e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      if (newVal !== simpleVals.n2) {
+                                        const updatedNilai = {
+                                          ...simpleVals,
+                                          n2: newVal,
+                                          jumlah: (simpleVals.n1 || 0) + newVal + (simpleVals.n3 || 0)
+                                        };
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        try {
+                                          await gradesHelper.updateGrade(user.id, item.id, {
+                                            nilai: JSON.stringify(updatedNilai),
+                                            rata: updatedRata
+                                          });
+                                          const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
+                                          setGrades(updatedGrades);
+                                          showToast("Nilai 2 berhasil diperbarui!", "success");
+                                        } catch (err) {
+                                          showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </td>
+                                <td className="py-3 px-2 text-center text-[#4a5568]">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-12 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                    defaultValue={simpleVals.n3 !== undefined ? simpleVals.n3 : 0}
+                                    onBlur={async (e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      if (newVal !== simpleVals.n3) {
+                                        const updatedNilai = {
+                                          ...simpleVals,
+                                          n3: newVal,
+                                          jumlah: (simpleVals.n1 || 0) + (simpleVals.n2 || 0) + newVal
+                                        };
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        try {
+                                          await gradesHelper.updateGrade(user.id, item.id, {
+                                            nilai: JSON.stringify(updatedNilai),
+                                            rata: updatedRata
+                                          });
+                                          const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
+                                          setGrades(updatedGrades);
+                                          showToast("Nilai 3 berhasil diperbarui!", "success");
+                                        } catch (err) {
+                                          showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </td>
+                              </>
                             )}
 
                             {/* Rapor Template cells */}
@@ -1244,9 +1700,99 @@ export default function DashboardApp() {
                             {/* Mapel Template cells */}
                             {template === "mapel" && (
                               <>
-                                <td className="py-3 px-2 text-center text-[#4a5568]">{mapelVals.n1 || 0}</td>
-                                <td className="py-3 px-2 text-center text-[#4a5568]">{mapelVals.n2 || 0}</td>
-                                <td className="py-3 px-2 text-center text-[#4a5568]">{mapelVals.n3 || 0}</td>
+                                <td className="py-3 px-2 text-center text-[#4a5568]">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-12 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                    defaultValue={mapelVals.n1 !== undefined ? mapelVals.n1 : 0}
+                                    onBlur={async (e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      if (newVal !== mapelVals.n1) {
+                                        const updatedNilai = {
+                                          ...mapelVals,
+                                          n1: newVal,
+                                          jumlah: newVal + (mapelVals.n2 || 0) + (mapelVals.n3 || 0)
+                                        };
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        try {
+                                          await gradesHelper.updateGrade(user.id, item.id, {
+                                            nilai: JSON.stringify(updatedNilai),
+                                            rata: updatedRata
+                                          });
+                                          const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
+                                          setGrades(updatedGrades);
+                                          showToast("Nilai 1 berhasil diperbarui!", "success");
+                                        } catch (err) {
+                                          showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </td>
+                                <td className="py-3 px-2 text-center text-[#4a5568]">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-12 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                    defaultValue={mapelVals.n2 !== undefined ? mapelVals.n2 : 0}
+                                    onBlur={async (e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      if (newVal !== mapelVals.n2) {
+                                        const updatedNilai = {
+                                          ...mapelVals,
+                                          n2: newVal,
+                                          jumlah: (mapelVals.n1 || 0) + newVal + (mapelVals.n3 || 0)
+                                        };
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        try {
+                                          await gradesHelper.updateGrade(user.id, item.id, {
+                                            nilai: JSON.stringify(updatedNilai),
+                                            rata: updatedRata
+                                          });
+                                          const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
+                                          setGrades(updatedGrades);
+                                          showToast("Nilai 2 berhasil diperbarui!", "success");
+                                        } catch (err) {
+                                          showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </td>
+                                <td className="py-3 px-2 text-center text-[#4a5568]">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-12 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                    defaultValue={mapelVals.n3 !== undefined ? mapelVals.n3 : 0}
+                                    onBlur={async (e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      if (newVal !== mapelVals.n3) {
+                                        const updatedNilai = {
+                                          ...mapelVals,
+                                          n3: newVal,
+                                          jumlah: (mapelVals.n1 || 0) + (mapelVals.n2 || 0) + newVal
+                                        };
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        try {
+                                          await gradesHelper.updateGrade(user.id, item.id, {
+                                            nilai: JSON.stringify(updatedNilai),
+                                            rata: updatedRata
+                                          });
+                                          const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
+                                          setGrades(updatedGrades);
+                                          showToast("Nilai 3 berhasil diperbarui!", "success");
+                                        } catch (err) {
+                                          showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </td>
                                 <td className="py-3 px-2 text-right font-bold text-[#4a5568] bg-[#e0e5ec]/15">{item.rata}</td>
                                 <td className="py-3 px-2 text-right font-black text-[#2d3436] pr-4 bg-[#e0e5ec]/15">{mapelVals.jumlah || 0}</td>
                                 <td className="py-3 px-2 text-center font-bold">
@@ -1266,6 +1812,159 @@ export default function DashboardApp() {
                                   </td>
                                 ))}
                                 <td className="py-3.5 px-4 text-right font-bold text-sm text-[#3b82f6]">{item.rata}</td>
+                              </>
+                            )}
+
+                            {/* Katalog Template cells */}
+                            {template === "katalog" && (
+                              <>
+                                {katalogSubjects.map((subj) => {
+                                  let subjVals = customItemVals[subj];
+                                  if (typeof subjVals !== "object" || subjVals === null) {
+                                    const oldVal = parseFloat(subjVals) || 0;
+                                    subjVals = { n1: oldVal, n2: 0, n3: 0 };
+                                  }
+                                  return (
+                                    <React.Fragment key={subj}>
+                                      <td className="py-3 px-2 text-center text-[#4a5568] border-l border-[#babecc]/10">
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="100"
+                                          className="w-10 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                          defaultValue={subjVals.n1 !== undefined ? subjVals.n1 : 0}
+                                          onBlur={async (e) => {
+                                            const newVal = parseInt(e.target.value) || 0;
+                                            if (newVal !== subjVals.n1) {
+                                              const updatedSubjVals = { ...subjVals, n1: newVal };
+                                              const updatedNilai = {
+                                                ...customItemVals,
+                                                [subj]: updatedSubjVals
+                                              };
+                                              let totalSum = 0;
+                                              katalogSubjects.forEach((s) => {
+                                                let sVals = updatedNilai[s];
+                                                if (typeof sVals !== "object" || sVals === null) {
+                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+                                                }
+                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+                                              });
+                                              const finalRata = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
+                                              try {
+                                                await gradesHelper.updateGrade(user.id, item.id, {
+                                                  nilai: JSON.stringify(updatedNilai),
+                                                  rata: finalRata
+                                                });
+                                                const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: finalRata } : g);
+                                                setGrades(updatedGrades);
+                                                showToast(`Nilai 1 ${subj} berhasil diperbarui!`, "success");
+                                              } catch (err) {
+                                                showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </td>
+                                      <td className="py-3 px-2 text-center text-[#4a5568]">
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="100"
+                                          className="w-10 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                          defaultValue={subjVals.n2 !== undefined ? subjVals.n2 : 0}
+                                          onBlur={async (e) => {
+                                            const newVal = parseInt(e.target.value) || 0;
+                                            if (newVal !== subjVals.n2) {
+                                              const updatedSubjVals = { ...subjVals, n2: newVal };
+                                              const updatedNilai = {
+                                                ...customItemVals,
+                                                [subj]: updatedSubjVals
+                                              };
+                                              let totalSum = 0;
+                                              katalogSubjects.forEach((s) => {
+                                                let sVals = updatedNilai[s];
+                                                if (typeof sVals !== "object" || sVals === null) {
+                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+                                                }
+                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+                                              });
+                                              const finalRata = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
+                                              try {
+                                                await gradesHelper.updateGrade(user.id, item.id, {
+                                                  nilai: JSON.stringify(updatedNilai),
+                                                  rata: finalRata
+                                                });
+                                                const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: finalRata } : g);
+                                                setGrades(updatedGrades);
+                                                showToast(`Nilai 2 ${subj} berhasil diperbarui!`, "success");
+                                              } catch (err) {
+                                                showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </td>
+                                      <td className="py-3 px-2 text-center text-[#4a5568] border-r border-[#babecc]/10">
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="100"
+                                          className="w-10 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                          defaultValue={subjVals.n3 !== undefined ? subjVals.n3 : 0}
+                                          onBlur={async (e) => {
+                                            const newVal = parseInt(e.target.value) || 0;
+                                            if (newVal !== subjVals.n3) {
+                                              const updatedSubjVals = { ...subjVals, n3: newVal };
+                                              const updatedNilai = {
+                                                ...customItemVals,
+                                                [subj]: updatedSubjVals
+                                              };
+                                              let totalSum = 0;
+                                              katalogSubjects.forEach((s) => {
+                                                let sVals = updatedNilai[s];
+                                                if (typeof sVals !== "object" || sVals === null) {
+                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+                                                }
+                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+                                              });
+                                              const finalRata = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
+                                              try {
+                                                await gradesHelper.updateGrade(user.id, item.id, {
+                                                  nilai: JSON.stringify(updatedNilai),
+                                                  rata: finalRata
+                                                });
+                                                const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: finalRata } : g);
+                                                setGrades(updatedGrades);
+                                                showToast(`Nilai 3 ${subj} berhasil diperbarui!`, "success");
+                                              } catch (err) {
+                                                showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </td>
+                                    </React.Fragment>
+                                  );
+                                })}
+                                <td className="py-3 px-2 text-right font-bold text-[#4a5568] bg-[#e0e5ec]/15">{item.rata}</td>
+                                <td className="py-3 px-2 text-right font-black text-[#2d3436] pr-4 bg-[#e0e5ec]/15">
+                                  {(() => {
+                                    let totalSum = 0;
+                                    katalogSubjects.forEach((s) => {
+                                      let sVals = customItemVals[s];
+                                      if (typeof sVals !== "object" || sVals === null) {
+                                        sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+                                      }
+                                      totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+                                    });
+                                    return parseFloat(totalSum.toFixed(1));
+                                  })()}
+                                </td>
+                                <td className="py-3 px-2 text-center font-bold">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-[#d1d9e6]/40 text-[#4a5568] text-[10px] font-bold">
+                                    {rank}
+                                  </span>
+                                </td>
                               </>
                             )}
 
@@ -1296,9 +1995,6 @@ export default function DashboardApp() {
 
             <div className="mt-8 pt-4 border-t border-[#babecc]/30 text-xs text-[#4a5568] font-medium flex flex-wrap justify-between gap-2">
               <span>SISTEM PENILAIAN OTOMATIS</span>
-              <span className="text-[9px] font-mono text-[#4a5568]/60">
-                Debug: Supabase: {isSupabaseConfigured() ? "AKTIF" : "NONAKTIF"} | User: {user ? user.email : "KOSONG"} | LocalSession: {typeof window !== "undefined" && localStorage.getItem("nilai_session") ? "ADA" : "KOSONG"}
-              </span>
               <span>NILAIAAP v1.0.0</span>
             </div>
           </Card>

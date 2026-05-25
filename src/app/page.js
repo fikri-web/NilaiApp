@@ -30,16 +30,16 @@ export default function LandingPage() {
       {/* Navigation Header */}
       <header className="w-full px-6 py-4 border-b border-[#babecc]/40 bg-[#f0f2f5]/85 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3" aria-label="NilaiApp Home">
             <div className="w-10 h-10 rounded-xl bg-[#f0f2f5] flex items-center justify-center border border-white/60 shadow-[4px_4px_8px_#babecc,-4px_-4px_8px_#ffffff] bevel-top">
-              <GraduationCap className="w-6 h-6 text-[#3b82f6]" />
+              <GraduationCap className="w-6 h-6 text-[#3b82f6]" aria-hidden="true" />
             </div>
             <span className="font-sans font-extrabold text-xl tracking-wide text-[#2d3436] uppercase">
               Nilai<span className="text-[#3b82f6]">App</span>
             </span>
           </Link>
           
-          <div className="flex items-center gap-4">
+          <nav className="flex items-center gap-4" aria-label="Navigasi Utama">
             {isLoggedIn ? (
               <Link href="/app">
                 <Button variant="accent" className="px-5 py-2">
@@ -55,24 +55,24 @@ export default function LandingPage() {
                 </Link>
                 <Link href="/register">
                   <Button variant="accent" className="px-5 py-2">
-                    Daftar Gratis
+                    Daftar
                   </Button>
                 </Link>
               </>
             )}
-          </div>
+          </nav>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-16 md:py-24 flex flex-col items-center">
         
-        {/* Main Hero Card */}
+        {/* Main Hero Card - H1 Hanya 1x di sini */}
         <Panel className="w-full max-w-4xl border border-[#babecc]/80 shadow-floating mb-16 p-8 md:p-12 text-center" variant="raised">
-          <div className="max-w-2xl mx-auto space-y-6">
+          <article className="max-w-2xl mx-auto space-y-6">
             
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#3b82f6] font-sans text-xs font-bold uppercase tracking-wider">
-              <CheckSquare className="w-4 h-4" />
+              <CheckSquare className="w-4 h-4" aria-hidden="true" />
               Sistem Penilaian Siswa Simpel & Cepat
             </div>
             
@@ -91,31 +91,24 @@ export default function LandingPage() {
               <Link href={isLoggedIn ? "/app" : "/login"}>
                 <Button variant="accent" className="gap-2 text-md px-6 py-3.5">
                   Mulai Input Nilai
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
                 </Button>
               </Link>
-              {!isLoggedIn && (
-                <Link href="/register">
-                  <Button variant="primary" className="px-6 py-3.5">
-                    Buat Akun Guru
-                  </Button>
-                </Link>
-              )}
             </div>
-          </div>
+          </article>
         </Panel>
 
-        {/* Feature Cards Grid */}
-        <div className="w-full text-center mb-10">
+        {/* Feature Cards Grid - Menggunakan H2 */}
+        <section className="w-full text-center mb-10" aria-labelledby="fitur-utama">
           <span className="text-xs font-black tracking-widest text-[#4a5568] uppercase">KEMUDAHAN UNTUK GURU</span>
-          <h2 className="text-2xl md:text-3xl font-black uppercase text-[#2d3436] mt-1">FITUR UTAMA NILAIAPP</h2>
-        </div>
+          <h2 id="fitur-utama" className="text-2xl md:text-3xl font-black uppercase text-[#2d3436] mt-1">FITUR UTAMA NILAIAPP</h2>
+        </section>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
           {/* Feature 1 */}
           <Card liftOnHover={true} className="flex flex-col gap-4 text-left">
             <div className="w-12 h-12 rounded-xl bg-[#f0f2f5] flex items-center justify-center shadow-card border border-white/60 bevel-top">
-              <CheckSquare className="w-6 h-6 text-[#3b82f6]" />
+              <CheckSquare className="w-6 h-6 text-[#3b82f6]" aria-hidden="true" />
             </div>
             <h3 className="font-extrabold text-lg uppercase tracking-wide text-[#2d3436]">Template Dinamis</h3>
             <p className="text-sm text-[#4a5568] leading-relaxed">
@@ -126,7 +119,7 @@ export default function LandingPage() {
           {/* Feature 2 */}
           <Card liftOnHover={true} className="flex flex-col gap-4 text-left">
             <div className="w-12 h-12 rounded-xl bg-[#f0f2f5] flex items-center justify-center shadow-card border border-white/60 bevel-top">
-              <ScanLine className="w-6 h-6 text-[#3b82f6]" />
+              <ScanLine className="w-6 h-6 text-[#3b82f6]" aria-hidden="true" />
             </div>
             <h3 className="font-extrabold text-lg uppercase tracking-wide text-[#2d3436]">Scan Nilai (OCR)</h3>
             <p className="text-sm text-[#4a5568] leading-relaxed">
@@ -137,11 +130,11 @@ export default function LandingPage() {
           {/* Feature 3 */}
           <Card liftOnHover={true} className="flex flex-col gap-4 text-left">
             <div className="w-12 h-12 rounded-xl bg-[#f0f2f5] flex items-center justify-center shadow-card border border-white/60 bevel-top">
-              <FileSpreadsheet className="w-6 h-6 text-[#3b82f6]" />
+              <FileSpreadsheet className="w-6 h-6 text-[#3b82f6]" aria-hidden="true" />
             </div>
             <h3 className="font-extrabold text-lg uppercase tracking-wide text-[#2d3436]">Ekspor ke Excel</h3>
             <p className="text-sm text-[#4a5568] leading-relaxed">
-              Unduh seluruh rekap nilai siswa Anda menjadi file spreadsheet Excel (`.xlsx`) hanya dengan satu kali klik.
+              Unduh seluruh rekap nilai siswa Anda menjadi file spreadsheet Excel (<code>.xlsx</code>) hanya dengan satu kali klik.
             </p>
           </Card>
         </div>
@@ -149,12 +142,12 @@ export default function LandingPage() {
         {/* Dynamic Ranking Preview Banner */}
         <Panel className="w-full max-w-5xl mt-16 p-6 bg-[#f0f2f5]" contentClassName="flex flex-col md:flex-row items-center justify-between gap-4 w-full" variant="sunken">
           <div className="flex items-center gap-3">
-            <TrendingUp className="w-6 h-6 text-[#3b82f6]" />
+            <TrendingUp className="w-6 h-6 text-[#3b82f6]" aria-hidden="true" />
             <span className="text-sm font-semibold text-[#4a5568] uppercase tracking-wide">
               Menghitung Rata-Rata & Menentukan Peringkat Kelas Secara Otomatis
             </span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2" aria-label="Kolom nilai yang dihitung otomatis">
             <span className="px-2.5 py-1 rounded bg-[#3b82f6]/10 text-[#3b82f6] text-xs font-mono font-bold">UTS</span>
             <span className="px-2.5 py-1 rounded bg-[#3b82f6]/10 text-[#3b82f6] text-xs font-mono font-bold">UAS</span>
             <span className="px-2.5 py-1 rounded bg-[#3b82f6]/10 text-[#3b82f6] text-xs font-mono font-bold">RATA-RATA</span>
@@ -167,8 +160,9 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="w-full py-8 border-t border-[#babecc]/40 bg-[#f0f2f5] mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-[#4a5568] font-medium">
-          <span>NILAIAAP © {new Date().getFullYear()} — ADMINISTRASI GURU LEBIH RINGAN</span>
-          <span>DIBUAT UNTUK PENDIDIK INDONESIA</span>
+          <span itemScope itemType="https://schema.org/Organization">
+            <span itemProp="name">NilaiApp</span> © {new Date().getFullYear()}
+          </span>
         </div>
       </footer>
     </div>
