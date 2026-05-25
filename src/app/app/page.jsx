@@ -968,10 +968,10 @@ export default function DashboardApp() {
       )}
 
       {/* Mapel Settings panel */}
-      {(template === "simple" || template === "mapel") && (
+      {(template === "simple" || template === "mapel" || template === "katalog" || template === "kosong") && (
         <div className="max-w-7xl w-full mx-auto mb-6">
           <Panel variant="raised" className="bg-[#f0f2f5] p-5" contentClassName="flex flex-wrap gap-4 items-center justify-between w-full">
-            <div className="flex-1 min-w-[220px]">
+            <div className="flex-grow min-w-[220px]">
               <Input
                 id="school-input"
                 label="Nama Sekolah"
@@ -987,14 +987,16 @@ export default function DashboardApp() {
                 onChange={(e) => handleClassChange(e.target.value)}
               />
             </div>
-            <div className="w-48">
-              <Input
-                id="subject-input"
-                label="Mata Pelajaran"
-                value={subjectName}
-                onChange={(e) => handleSubjectChange(e.target.value)}
-              />
-            </div>
+            {template !== "katalog" && template !== "kosong" && (
+              <div className="w-48">
+                <Input
+                  id="subject-input"
+                  label="Mata Pelajaran"
+                  value={subjectName}
+                  onChange={(e) => handleSubjectChange(e.target.value)}
+                />
+              </div>
+            )}
           </Panel>
         </div>
       )}
@@ -1364,7 +1366,7 @@ export default function DashboardApp() {
               {/* Visual Spreadsheet Header for Katalog Template */}
               {template === "katalog" && (
                 <div className="text-center font-sans space-y-1 select-none border border-[#babecc]/35 bg-[#e0e5ec]/10 p-4 rounded-lg mb-6 shadow-inner">
-                  <h3 className="text-xs font-black uppercase text-[#2d3436] tracking-wider">DAFTAR NILAI KATALOG (LEGER)</h3>
+                  <h3 className="text-xs font-black uppercase text-[#2d3436] tracking-wider">DAFTAR NILAI</h3>
                   <h4 className="text-sm font-extrabold text-[#4a5568] uppercase">{schoolName}</h4>
                   <div className="flex flex-col sm:flex-row justify-center sm:gap-8 text-xs font-semibold text-[#4a5568] pt-1">
                     <span>Kelas : <span className="text-[#2d3436] font-bold">{classNameVal}</span></span>
