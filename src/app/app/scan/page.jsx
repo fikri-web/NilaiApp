@@ -189,6 +189,7 @@ export default function OcrScanPage() {
           itemValues.n1 = numericTokens[0] !== undefined ? numericTokens[0] : 0;
           itemValues.n2 = numericTokens[1] !== undefined ? numericTokens[1] : 0;
           itemValues.n3 = numericTokens[2] !== undefined ? numericTokens[2] : 0;
+          itemValues.n4 = numericTokens[3] !== undefined ? numericTokens[3] : 0;
         } else if (template === "rapor") {
           itemValues.h1 = numericTokens[0] !== undefined ? numericTokens[0] : 0;
           itemValues.h2 = numericTokens[1] !== undefined ? numericTokens[1] : 0;
@@ -200,6 +201,7 @@ export default function OcrScanPage() {
           itemValues.n1 = numericTokens[0] !== undefined ? numericTokens[0] : 0;
           itemValues.n2 = numericTokens[1] !== undefined ? numericTokens[1] : 0;
           itemValues.n3 = numericTokens[2] !== undefined ? numericTokens[2] : 0;
+          itemValues.n4 = numericTokens[3] !== undefined ? numericTokens[3] : 0;
         } else if (template === "kosong") {
           customColumns.forEach((col, idx) => {
             itemValues[col] = numericTokens[idx] !== undefined ? numericTokens[idx] : 0;
@@ -210,9 +212,10 @@ export default function OcrScanPage() {
             itemValues[subj] = {
               n1: numericTokens[tokenIdx] !== undefined ? numericTokens[tokenIdx] : 0,
               n2: numericTokens[tokenIdx + 1] !== undefined ? numericTokens[tokenIdx + 1] : 0,
-              n3: numericTokens[tokenIdx + 2] !== undefined ? numericTokens[tokenIdx + 2] : 0
+              n3: numericTokens[tokenIdx + 2] !== undefined ? numericTokens[tokenIdx + 2] : 0,
+              n4: numericTokens[tokenIdx + 3] !== undefined ? numericTokens[tokenIdx + 3] : 0
             };
-            tokenIdx += 3;
+            tokenIdx += 4;
           });
         }
 
@@ -230,11 +233,11 @@ export default function OcrScanPage() {
   const handleEditParsedValue = (id, fieldName, newVal) => {
     setParsedData(parsedData.map((item) => {
       if (item.id === id) {
-        if (fieldName.endsWith("_n1") || fieldName.endsWith("_n2") || fieldName.endsWith("_n3")) {
+        if (fieldName.endsWith("_n1") || fieldName.endsWith("_n2") || fieldName.endsWith("_n3") || fieldName.endsWith("_n4")) {
           const parts = fieldName.split("_");
           const subKey = parts.pop();
           const subj = parts.join("_");
-          const currentSubjVal = item.values[subj] || { n1: 0, n2: 0, n3: 0 };
+          const currentSubjVal = item.values[subj] || { n1: 0, n2: 0, n3: 0, n4: 0 };
           return {
             ...item,
             values: {
@@ -276,14 +279,16 @@ export default function OcrScanPage() {
           const val1 = item.values.n1 || 0;
           const val2 = item.values.n2 || 0;
           const val3 = item.values.n3 || 0;
+          const val4 = item.values.n4 || 0;
           
-          const sum = val1 + val2 + val3;
-          const avg = parseFloat((sum / 3).toFixed(1));
+          const sum = val1 + val2 + val3 + val4;
+          const avg = parseFloat((sum / 4).toFixed(1));
           
           const simpleData = {
             n1: val1,
             n2: val2,
             n3: val3,
+            n4: val4,
             jumlah: sum
           };
           
@@ -321,14 +326,16 @@ export default function OcrScanPage() {
           const val1 = item.values.n1 || 0;
           const val2 = item.values.n2 || 0;
           const val3 = item.values.n3 || 0;
+          const val4 = item.values.n4 || 0;
           
-          const sum = val1 + val2 + val3;
-          const avg = parseFloat((sum / 3).toFixed(1));
+          const sum = val1 + val2 + val3 + val4;
+          const avg = parseFloat((sum / 4).toFixed(1));
           
           const mapelData = {
             n1: val1,
             n2: val2,
             n3: val3,
+            n4: val4,
             jumlah: sum
           };
           
@@ -337,8 +344,8 @@ export default function OcrScanPage() {
         } else if (template === "katalog") {
           let totalSum = 0;
           katalogSubjects.forEach((subj) => {
-            const sVals = item.values[subj] || { n1: 0, n2: 0, n3: 0 };
-            totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+            const sVals = item.values[subj] || { n1: 0, n2: 0, n3: 0, n4: 0 };
+            totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0) + (sVals.n4 || 0)) / 4;
           });
           const avg = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
           
@@ -462,8 +469,8 @@ export default function OcrScanPage() {
                 </div>
                 {template === "simple" && (
                   <>
-                    <div>Format: [Nama] [N1] [N2] [N3]</div>
-                    <div className="text-gray-500 italic">Contoh: ABDI SANJAYA 85 90 80</div>
+                    <div>Format: [Nama] [N1] [N2] [N3] [N4]</div>
+                    <div className="text-gray-500 italic">Contoh: ABDI SANJAYA 85 90 80 88</div>
                   </>
                 )}
                 {template === "rapor" && (
@@ -474,8 +481,8 @@ export default function OcrScanPage() {
                 )}
                 {template === "mapel" && (
                   <>
-                    <div>Format: [Nama] [N1] [N2] [N3]</div>
-                    <div className="text-gray-500 italic">Contoh: ABDI SANJAYA 85 90 80</div>
+                    <div>Format: [Nama] [N1] [N2] [N3] [N4]</div>
+                    <div className="text-gray-500 italic">Contoh: ABDI SANJAYA 85 90 80 88</div>
                   </>
                 )}
                 {template === "kosong" && (
@@ -488,9 +495,9 @@ export default function OcrScanPage() {
                 )}
                 {template === "katalog" && (
                   <>
-                    <div>Format: [Nama] {katalogSubjects.map(subj => `[${subj} 1] [${subj} 2] [${subj} 3]`).join(" ")}</div>
+                    <div>Format: [Nama] {katalogSubjects.map(subj => `[${subj} 1] [${subj} 2] [${subj} 3] [${subj} 4]`).join(" ")}</div>
                     <div className="text-gray-500 italic">
-                      Contoh: ABDI SANJAYA {katalogSubjects.map(() => "80 85 90").join(" ")}
+                      Contoh: ABDI SANJAYA {katalogSubjects.map(() => "80 85 90 95").join(" ")}
                     </div>
                   </>
                 )}
@@ -530,6 +537,7 @@ export default function OcrScanPage() {
                                <th className="py-2.5 px-2 text-center w-14">N1</th>
                                <th className="py-2.5 px-2 text-center w-14">N2</th>
                                <th className="py-2.5 px-2 text-center w-14">N3</th>
+                               <th className="py-2.5 px-2 text-center w-14">N4</th>
                              </>
                           )}
                           {template === "rapor" && (
@@ -547,6 +555,7 @@ export default function OcrScanPage() {
                               <th className="py-2.5 px-2 text-center w-14">N1</th>
                               <th className="py-2.5 px-2 text-center w-14">N2</th>
                               <th className="py-2.5 px-2 text-center w-14">N3</th>
+                              <th className="py-2.5 px-2 text-center w-14">N4</th>
                             </>
                           )}
                           {template === "katalog" && katalogSubjects.map((subj) => (
@@ -554,6 +563,7 @@ export default function OcrScanPage() {
                                <th className="py-2.5 px-1 text-center w-12">{subj} 1</th>
                                <th className="py-2.5 px-1 text-center w-12">{subj} 2</th>
                                <th className="py-2.5 px-1 text-center w-12">{subj} 3</th>
+                               <th className="py-2.5 px-1 text-center w-12">{subj} 4</th>
                              </React.Fragment>
                           ))}
                           {template === "kosong" && customColumns.map((col) => (
@@ -575,7 +585,7 @@ export default function OcrScanPage() {
                             </td>
                             {template === "simple" && (
                               <>
-                                {["n1", "n2", "n3"].map((fld) => (
+                                {["n1", "n2", "n3", "n4"].map((fld) => (
                                   <td key={fld} className="py-2 px-1 text-center">
                                     <input 
                                       type="number"
@@ -603,7 +613,7 @@ export default function OcrScanPage() {
                             )}
                             {template === "mapel" && (
                               <>
-                                {["n1", "n2", "n3"].map((fld) => (
+                                {["n1", "n2", "n3", "n4"].map((fld) => (
                                   <td key={fld} className="py-2 px-1 text-center">
                                     <input 
                                       type="number"
@@ -616,7 +626,7 @@ export default function OcrScanPage() {
                               </>
                             )}
                             {template === "katalog" && katalogSubjects.map((subj) => {
-                              const sVals = item.values[subj] || { n1: 0, n2: 0, n3: 0 };
+                              const sVals = item.values[subj] || { n1: 0, n2: 0, n3: 0, n4: 0 };
                               return (
                                 <React.Fragment key={subj}>
                                   <td className="py-2 px-1 text-center">
@@ -640,6 +650,14 @@ export default function OcrScanPage() {
                                       type="number"
                                       value={sVals.n3 !== undefined ? sVals.n3 : 0}
                                       onChange={(e) => handleEditParsedValue(item.id, `${subj}_n3`, e.target.value)}
+                                      className="w-10 px-1 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
+                                    />
+                                  </td>
+                                  <td className="py-2 px-1 text-center">
+                                    <input 
+                                      type="number"
+                                      value={sVals.n4 !== undefined ? sVals.n4 : 0}
+                                      onChange={(e) => handleEditParsedValue(item.id, `${subj}_n4`, e.target.value)}
                                       className="w-10 px-1 py-1 bg-transparent hover:bg-white/50 focus:bg-white border border-transparent focus:border-[#3b82f6]/30 focus:ring-1 focus:ring-[#3b82f6]/30 focus:shadow-inner rounded outline-none text-center font-bold text-[#3b82f6]"
                                     />
                                   </td>

@@ -156,7 +156,7 @@ export default function DashboardApp() {
               user_id: sessionUser.id,
               nama: "ABDI SANJAYA",
               template_type: "mapel",
-              nilai: JSON.stringify({ n1: 85, n2: 90, n3: 80, jumlah: 255 }),
+              nilai: JSON.stringify({ n1: 85, n2: 90, n3: 80, n4: 85, jumlah: 340 }),
               rata: 85.0,
               created_at: new Date(Date.now() - 30000).toISOString()
             },
@@ -165,8 +165,8 @@ export default function DashboardApp() {
               user_id: sessionUser.id,
               nama: "ABRAHAM MS",
               template_type: "mapel",
-              nilai: JSON.stringify({ n1: 70, n2: 75, n3: 72, jumlah: 217 }),
-              rata: 72.3,
+              nilai: JSON.stringify({ n1: 70, n2: 75, n3: 72, n4: 78, jumlah: 295 }),
+              rata: 73.8,
               created_at: new Date(Date.now() - 20000).toISOString()
             },
             {
@@ -174,8 +174,8 @@ export default function DashboardApp() {
               user_id: sessionUser.id,
               nama: "ADE SETIAWAN",
               template_type: "mapel",
-              nilai: JSON.stringify({ n1: 92, n2: 95, n3: 96, jumlah: 283 }),
-              rata: 94.3,
+              nilai: JSON.stringify({ n1: 92, n2: 95, n3: 96, n4: 93, jumlah: 376 }),
+              rata: 94.0,
               created_at: new Date(Date.now() - 10000).toISOString()
             },
             {
@@ -316,14 +316,16 @@ export default function DashboardApp() {
       const val1 = parseFloat(harian1) || 0;
       const val2 = parseFloat(harian2) || 0;
       const val3 = parseFloat(harian3) || 0;
+      const val4 = parseFloat(harian4) || 0;
 
-      const sum = val1 + val2 + val3;
-      const avg = parseFloat((sum / 3).toFixed(1));
+      const sum = val1 + val2 + val3 + val4;
+      const avg = parseFloat((sum / 4).toFixed(1));
 
       const simpleData = {
         n1: val1,
         n2: val2,
         n3: val3,
+        n4: val4,
         jumlah: sum
       };
 
@@ -361,14 +363,16 @@ export default function DashboardApp() {
       const val1 = parseFloat(harian1) || 0;
       const val2 = parseFloat(harian2) || 0;
       const val3 = parseFloat(harian3) || 0;
+      const val4 = parseFloat(harian4) || 0;
 
-      const sum = val1 + val2 + val3;
-      const avg = parseFloat((sum / 3).toFixed(1));
+      const sum = val1 + val2 + val3 + val4;
+      const avg = parseFloat((sum / 4).toFixed(1));
 
       const mapelData = {
         n1: val1,
         n2: val2,
         n3: val3,
+        n4: val4,
         jumlah: sum
       };
 
@@ -389,8 +393,9 @@ export default function DashboardApp() {
         const n1 = parseFloat(sVals.n1) || 0;
         const n2 = parseFloat(sVals.n2) || 0;
         const n3 = parseFloat(sVals.n3) || 0;
-        catalogData[subj] = { n1, n2, n3 };
-        totalSum += (n1 + n2 + n3) / 3;
+        const n4 = parseFloat(sVals.n4) || 0;
+        catalogData[subj] = { n1, n2, n3, n4 };
+        totalSum += (n1 + n2 + n3 + n4) / 4;
       });
       const avg = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
 
@@ -550,8 +555,8 @@ export default function DashboardApp() {
         ["Kelas :", classNameVal],
         []
       ];
-      const headerRow1 = ["No", "Nama", subjectName, "", ""];
-      const headerRow2 = ["", "", "1", "2", "3"];
+      const headerRow1 = ["No", "Nama", subjectName, "", "", ""];
+      const headerRow2 = ["", "", "1", "2", "3", "4"];
       const dataRows = rankedGrades.map((g, idx) => {
         let simpleVals = {};
         if (g.nilai) {
@@ -566,7 +571,8 @@ export default function DashboardApp() {
           g.nama.toUpperCase(),
           simpleVals.n1 || 0,
           simpleVals.n2 || 0,
-          simpleVals.n3 || 0
+          simpleVals.n3 || 0,
+          simpleVals.n4 || 0
         ];
       });
 
@@ -574,11 +580,11 @@ export default function DashboardApp() {
       worksheet = XLSX.utils.aoa_to_sheet(finalData);
 
       worksheet["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
         { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } },
         { s: { r: 5, c: 1 }, e: { r: 6, c: 1 } },
-        { s: { r: 5, c: 2 }, e: { r: 5, c: 4 } }
+        { s: { r: 5, c: 2 }, e: { r: 5, c: 5 } }
       ];
 
       applyExcelStyles(worksheet, "mapel", 5);
@@ -656,8 +662,8 @@ export default function DashboardApp() {
         ["Kelas :", classNameVal],
         []
       ];
-      const headerRow1 = ["No", "Nama", subjectName, "", "", "Rata-rata", "Jumlah", "Ranking"];
-      const headerRow2 = ["", "", "1", "2", "3", "", "", ""];
+      const headerRow1 = ["No", "Nama", subjectName, "", "", "", "Rata-rata", "Jumlah", "Ranking"];
+      const headerRow2 = ["", "", "1", "2", "3", "4", "", "", ""];
       const dataRows = rankedGrades.map((g, idx) => {
         let mapelVals = {};
         if (g.nilai) {
@@ -673,6 +679,7 @@ export default function DashboardApp() {
           mapelVals.n1 || 0,
           mapelVals.n2 || 0,
           mapelVals.n3 || 0,
+          mapelVals.n4 || 0,
           g.rata,
           mapelVals.jumlah || 0,
           idx + 1
@@ -683,14 +690,14 @@ export default function DashboardApp() {
       worksheet = XLSX.utils.aoa_to_sheet(finalData);
 
       worksheet["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },
         { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } },
         { s: { r: 5, c: 1 }, e: { r: 6, c: 1 } },
-        { s: { r: 5, c: 2 }, e: { r: 5, c: 4 } },
-        { s: { r: 5, c: 5 }, e: { r: 6, c: 5 } },
+        { s: { r: 5, c: 2 }, e: { r: 5, c: 5 } },
         { s: { r: 5, c: 6 }, e: { r: 6, c: 6 } },
-        { s: { r: 5, c: 7 }, e: { r: 6, c: 7 } }
+        { s: { r: 5, c: 7 }, e: { r: 6, c: 7 } },
+        { s: { r: 5, c: 8 }, e: { r: 6, c: 8 } }
       ];
 
       applyExcelStyles(worksheet, "mapel", 5);
@@ -741,13 +748,13 @@ export default function DashboardApp() {
 
       const headerRow1 = ["No", "Nama Siswa"];
       katalogSubjects.forEach((s) => {
-        headerRow1.push(s, "", "");
+        headerRow1.push(s, "", "", "");
       });
       headerRow1.push("Rata-rata", "Jumlah", "Ranking");
 
       const headerRow2 = ["", ""];
       katalogSubjects.forEach(() => {
-        headerRow2.push("1", "2", "3");
+        headerRow2.push("1", "2", "3", "4");
       });
       headerRow2.push("", "", "");
 
@@ -768,10 +775,10 @@ export default function DashboardApp() {
         katalogSubjects.forEach((subj) => {
           let sVals = studentVals[subj];
           if (typeof sVals !== "object" || sVals === null) {
-            sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+            sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0, n4: 0 };
           }
-          row.push(sVals.n1 || 0, sVals.n2 || 0, sVals.n3 || 0);
-          totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+          row.push(sVals.n1 || 0, sVals.n2 || 0, sVals.n3 || 0, sVals.n4 || 0);
+          totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0) + (sVals.n4 || 0)) / 4;
         });
         row.push(
           g.rata,
@@ -784,7 +791,7 @@ export default function DashboardApp() {
       const finalData = [...metaRows, headerRow1, headerRow2, ...dataRows];
       worksheet = XLSX.utils.aoa_to_sheet(finalData);
 
-      const totalCols = 2 + katalogSubjects.length * 3 + 3;
+      const totalCols = 2 + katalogSubjects.length * 4 + 3;
       const merges = [
         { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } },
         { s: { r: 1, c: 0 }, e: { r: 1, c: totalCols - 1 } },
@@ -794,12 +801,12 @@ export default function DashboardApp() {
 
       katalogSubjects.forEach((_, i) => {
         merges.push({
-          s: { r: 5, c: 2 + i * 3 },
-          e: { r: 5, c: 4 + i * 3 }
+          s: { r: 5, c: 2 + i * 4 },
+          e: { r: 5, c: 5 + i * 4 }
         });
       });
 
-      const startIdx = 2 + katalogSubjects.length * 3;
+      const startIdx = 2 + katalogSubjects.length * 4;
       merges.push(
         { s: { r: 5, c: startIdx }, e: { r: 6, c: startIdx } },     // Rata-rata
         { s: { r: 5, c: startIdx + 1 }, e: { r: 6, c: startIdx + 1 } }, // Jumlah
@@ -1195,7 +1202,7 @@ export default function DashboardApp() {
               {(template === "simple" || template === "mapel") && (
                 <>
                   <span className="text-xs font-extrabold uppercase text-[#4a5568] -mb-1 block">Nilai {subjectName}</span>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <Input
                       id="mapel-1"
                       placeholder="1"
@@ -1226,6 +1233,16 @@ export default function DashboardApp() {
                       onChange={(e) => setHarian3(e.target.value)}
                       required
                     />
+                    <Input
+                      id="mapel-4"
+                      placeholder="4"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={harian4}
+                      onChange={(e) => setHarian4(e.target.value)}
+                      required
+                    />
                   </div>
                 </>
               )}
@@ -1251,7 +1268,7 @@ export default function DashboardApp() {
               {template === "katalog" && katalogSubjects.map((subj) => (
                 <div key={subj} className="space-y-1">
                   <span className="text-xs font-extrabold uppercase text-[#4a5568] -mb-1 block">Nilai {subj}</span>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <Input
                       id={`katalog-${subj}-1`}
                       placeholder="1"
@@ -1296,6 +1313,22 @@ export default function DashboardApp() {
                         [subj]: {
                           ...(customValues[subj] || {}),
                           n3: e.target.value
+                        }
+                      })}
+                      required
+                    />
+                    <Input
+                      id={`katalog-${subj}-4`}
+                      placeholder="4"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={customValues[subj]?.n4 || ""}
+                      onChange={(e) => setCustomValues({
+                        ...customValues,
+                        [subj]: {
+                          ...(customValues[subj] || {}),
+                          n4: e.target.value
                         }
                       })}
                       required
@@ -1431,7 +1464,7 @@ export default function DashboardApp() {
                           <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[10px] font-bold uppercase text-[#4a5568] tracking-wider select-none">
                             <th className="py-2.5 px-3 text-center w-12" rowSpan={2}>No</th>
                             <th className="py-2.5 px-4" rowSpan={2}>Nama</th>
-                            <th className="py-1 px-2 text-center border-l border-r border-[#babecc]/40 bg-[#e0e5ec]/30" colSpan={3}>
+                            <th className="py-1 px-2 text-center border-l border-r border-[#babecc]/40 bg-[#e0e5ec]/30" colSpan={4}>
                               {subjectName || "Mata Pelajaran"}
                             </th>
                             <th className="py-2.5 px-3 text-center w-16" rowSpan={2}>Aksi</th>
@@ -1439,7 +1472,8 @@ export default function DashboardApp() {
                           <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[9px] font-bold uppercase text-[#4a5568] tracking-wider select-none text-right">
                             <th className="py-1 px-2 border-l border-[#babecc]/30 w-12 text-center">1</th>
                             <th className="py-1 px-2 text-center w-12">2</th>
-                            <th className="py-1 px-2 border-r border-[#babecc]/30 text-center w-12">3</th>
+                            <th className="py-1 px-2 text-center w-12">3</th>
+                            <th className="py-1 px-2 border-r border-[#babecc]/30 text-center w-12">4</th>
                           </tr>
                         </>
                       )}
@@ -1449,7 +1483,7 @@ export default function DashboardApp() {
                           <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[10px] font-bold uppercase text-[#4a5568] tracking-wider select-none">
                             <th className="py-2.5 px-3 text-center w-12" rowSpan={2}>No</th>
                             <th className="py-2.5 px-4" rowSpan={2}>Nama</th>
-                            <th className="py-1 px-2 text-center border-l border-r border-[#babecc]/40 bg-[#e0e5ec]/30" colSpan={3}>
+                            <th className="py-1 px-2 text-center border-l border-r border-[#babecc]/40 bg-[#e0e5ec]/30" colSpan={4}>
                               {subjectName || "Mata Pelajaran"}
                             </th>
                             <th className="py-2.5 px-3 text-right w-20" rowSpan={2}>Rata-rata</th>
@@ -1460,7 +1494,8 @@ export default function DashboardApp() {
                           <tr className="border-b border-[#babecc]/50 bg-[#f0f2f5] text-[9px] font-bold uppercase text-[#4a5568] tracking-wider select-none text-right">
                             <th className="py-1 px-2 border-l border-[#babecc]/30 w-12 text-center">1</th>
                             <th className="py-1 px-2 text-center w-12">2</th>
-                            <th className="py-1 px-2 border-r border-[#babecc]/30 text-center w-12">3</th>
+                            <th className="py-1 px-2 text-center w-12">3</th>
+                            <th className="py-1 px-2 border-r border-[#babecc]/30 text-center w-12">4</th>
                           </tr>
                         </>
                       )}
@@ -1471,7 +1506,7 @@ export default function DashboardApp() {
                             <th className="py-2.5 px-3 text-center w-12" rowSpan={2}>No</th>
                             <th className="py-2.5 px-4" rowSpan={2}>Nama Lengkap</th>
                             {katalogSubjects.map((subj) => (
-                              <th key={subj} className="py-1 px-2 text-center border-l border-r border-[#babecc]/40 bg-[#e0e5ec]/30" colSpan={3}>
+                              <th key={subj} className="py-1 px-2 text-center border-l border-r border-[#babecc]/40 bg-[#e0e5ec]/30" colSpan={4}>
                                 {subj}
                               </th>
                             ))}
@@ -1485,7 +1520,8 @@ export default function DashboardApp() {
                               <React.Fragment key={subj}>
                                 <th className="py-1 px-2 border-l border-[#babecc]/30 w-10 text-center">1</th>
                                 <th className="py-1 px-2 text-center w-10">2</th>
-                                <th className="py-1 px-2 border-r border-[#babecc]/30 text-center w-10">3</th>
+                                <th className="py-1 px-2 text-center w-10">3</th>
+                                <th className="py-1 px-2 border-r border-[#babecc]/30 text-center w-10">4</th>
                               </React.Fragment>
                             ))}
                           </tr>
@@ -1520,7 +1556,7 @@ export default function DashboardApp() {
                           try {
                             simpleVals = JSON.parse(item.nilai);
                           } catch {
-                            simpleVals = { n1: parseFloat(item.nilai) || 0, n2: 0, n3: 0 };
+                            simpleVals = { n1: parseFloat(item.nilai) || 0, n2: 0, n3: 0, n4: 0 };
                           }
                         } else if (template === "rapor" && item.nilai) {
                           try {
@@ -1598,9 +1634,9 @@ export default function DashboardApp() {
                                         const updatedNilai = {
                                           ...simpleVals,
                                           n1: newVal,
-                                          jumlah: newVal + (simpleVals.n2 || 0) + (simpleVals.n3 || 0)
+                                          jumlah: newVal + (simpleVals.n2 || 0) + (simpleVals.n3 || 0) + (simpleVals.n4 || 0)
                                         };
-                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 4).toFixed(1));
                                         try {
                                           await gradesHelper.updateGrade(user.id, item.id, {
                                             nilai: JSON.stringify(updatedNilai),
@@ -1629,9 +1665,9 @@ export default function DashboardApp() {
                                         const updatedNilai = {
                                           ...simpleVals,
                                           n2: newVal,
-                                          jumlah: (simpleVals.n1 || 0) + newVal + (simpleVals.n3 || 0)
+                                          jumlah: (simpleVals.n1 || 0) + newVal + (simpleVals.n3 || 0) + (simpleVals.n4 || 0)
                                         };
-                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 4).toFixed(1));
                                         try {
                                           await gradesHelper.updateGrade(user.id, item.id, {
                                             nilai: JSON.stringify(updatedNilai),
@@ -1660,9 +1696,9 @@ export default function DashboardApp() {
                                         const updatedNilai = {
                                           ...simpleVals,
                                           n3: newVal,
-                                          jumlah: (simpleVals.n1 || 0) + (simpleVals.n2 || 0) + newVal
+                                          jumlah: (simpleVals.n1 || 0) + (simpleVals.n2 || 0) + newVal + (simpleVals.n4 || 0)
                                         };
-                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 4).toFixed(1));
                                         try {
                                           await gradesHelper.updateGrade(user.id, item.id, {
                                             nilai: JSON.stringify(updatedNilai),
@@ -1671,6 +1707,37 @@ export default function DashboardApp() {
                                           const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
                                           setGrades(updatedGrades);
                                           showToast("Nilai 3 berhasil diperbarui!", "success");
+                                        } catch (err) {
+                                          showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </td>
+                                <td className="py-3 px-2 text-center text-[#4a5568]">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-12 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                    defaultValue={simpleVals.n4 !== undefined ? simpleVals.n4 : 0}
+                                    onBlur={async (e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      if (newVal !== simpleVals.n4) {
+                                        const updatedNilai = {
+                                          ...simpleVals,
+                                          n4: newVal,
+                                          jumlah: (simpleVals.n1 || 0) + (simpleVals.n2 || 0) + (simpleVals.n3 || 0) + newVal
+                                        };
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 4).toFixed(1));
+                                        try {
+                                          await gradesHelper.updateGrade(user.id, item.id, {
+                                            nilai: JSON.stringify(updatedNilai),
+                                            rata: updatedRata
+                                          });
+                                          const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
+                                          setGrades(updatedGrades);
+                                          showToast("Nilai 4 berhasil diperbarui!", "success");
                                         } catch (err) {
                                           showToast("Gagal memperbarui nilai: " + err.message, "error");
                                         }
@@ -1715,9 +1782,9 @@ export default function DashboardApp() {
                                         const updatedNilai = {
                                           ...mapelVals,
                                           n1: newVal,
-                                          jumlah: newVal + (mapelVals.n2 || 0) + (mapelVals.n3 || 0)
+                                          jumlah: newVal + (mapelVals.n2 || 0) + (mapelVals.n3 || 0) + (mapelVals.n4 || 0)
                                         };
-                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 4).toFixed(1));
                                         try {
                                           await gradesHelper.updateGrade(user.id, item.id, {
                                             nilai: JSON.stringify(updatedNilai),
@@ -1746,9 +1813,9 @@ export default function DashboardApp() {
                                         const updatedNilai = {
                                           ...mapelVals,
                                           n2: newVal,
-                                          jumlah: (mapelVals.n1 || 0) + newVal + (mapelVals.n3 || 0)
+                                          jumlah: (mapelVals.n1 || 0) + newVal + (mapelVals.n3 || 0) + (mapelVals.n4 || 0)
                                         };
-                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 4).toFixed(1));
                                         try {
                                           await gradesHelper.updateGrade(user.id, item.id, {
                                             nilai: JSON.stringify(updatedNilai),
@@ -1777,9 +1844,9 @@ export default function DashboardApp() {
                                         const updatedNilai = {
                                           ...mapelVals,
                                           n3: newVal,
-                                          jumlah: (mapelVals.n1 || 0) + (mapelVals.n2 || 0) + newVal
+                                          jumlah: (mapelVals.n1 || 0) + (mapelVals.n2 || 0) + newVal + (mapelVals.n4 || 0)
                                         };
-                                        const updatedRata = parseFloat((updatedNilai.jumlah / 3).toFixed(1));
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 4).toFixed(1));
                                         try {
                                           await gradesHelper.updateGrade(user.id, item.id, {
                                             nilai: JSON.stringify(updatedNilai),
@@ -1788,6 +1855,37 @@ export default function DashboardApp() {
                                           const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
                                           setGrades(updatedGrades);
                                           showToast("Nilai 3 berhasil diperbarui!", "success");
+                                        } catch (err) {
+                                          showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </td>
+                                <td className="py-3 px-2 text-center text-[#4a5568]">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="w-12 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                    defaultValue={mapelVals.n4 !== undefined ? mapelVals.n4 : 0}
+                                    onBlur={async (e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      if (newVal !== mapelVals.n4) {
+                                        const updatedNilai = {
+                                          ...mapelVals,
+                                          n4: newVal,
+                                          jumlah: (mapelVals.n1 || 0) + (mapelVals.n2 || 0) + (mapelVals.n3 || 0) + newVal
+                                        };
+                                        const updatedRata = parseFloat((updatedNilai.jumlah / 4).toFixed(1));
+                                        try {
+                                          await gradesHelper.updateGrade(user.id, item.id, {
+                                            nilai: JSON.stringify(updatedNilai),
+                                            rata: updatedRata
+                                          });
+                                          const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: updatedRata } : g);
+                                          setGrades(updatedGrades);
+                                          showToast("Nilai 4 berhasil diperbarui!", "success");
                                         } catch (err) {
                                           showToast("Gagal memperbarui nilai: " + err.message, "error");
                                         }
@@ -1824,7 +1922,7 @@ export default function DashboardApp() {
                                   let subjVals = customItemVals[subj];
                                   if (typeof subjVals !== "object" || subjVals === null) {
                                     const oldVal = parseFloat(subjVals) || 0;
-                                    subjVals = { n1: oldVal, n2: 0, n3: 0 };
+                                    subjVals = { n1: oldVal, n2: 0, n3: 0, n4: 0 };
                                   }
                                   return (
                                     <React.Fragment key={subj}>
@@ -1847,9 +1945,9 @@ export default function DashboardApp() {
                                               katalogSubjects.forEach((s) => {
                                                 let sVals = updatedNilai[s];
                                                 if (typeof sVals !== "object" || sVals === null) {
-                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0, n4: 0 };
                                                 }
-                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0) + (sVals.n4 || 0)) / 4;
                                               });
                                               const finalRata = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
                                               try {
@@ -1886,9 +1984,9 @@ export default function DashboardApp() {
                                               katalogSubjects.forEach((s) => {
                                                 let sVals = updatedNilai[s];
                                                 if (typeof sVals !== "object" || sVals === null) {
-                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0, n4: 0 };
                                                 }
-                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0) + (sVals.n4 || 0)) / 4;
                                               });
                                               const finalRata = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
                                               try {
@@ -1906,7 +2004,7 @@ export default function DashboardApp() {
                                           }}
                                         />
                                       </td>
-                                      <td className="py-3 px-2 text-center text-[#4a5568] border-r border-[#babecc]/10">
+                                      <td className="py-3 px-2 text-center text-[#4a5568]">
                                         <input
                                           type="number"
                                           min="0"
@@ -1925,9 +2023,9 @@ export default function DashboardApp() {
                                               katalogSubjects.forEach((s) => {
                                                 let sVals = updatedNilai[s];
                                                 if (typeof sVals !== "object" || sVals === null) {
-                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0, n4: 0 };
                                                 }
-                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0) + (sVals.n4 || 0)) / 4;
                                               });
                                               const finalRata = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
                                               try {
@@ -1945,6 +2043,45 @@ export default function DashboardApp() {
                                           }}
                                         />
                                       </td>
+                                      <td className="py-3 px-2 text-center text-[#4a5568] border-r border-[#babecc]/10">
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="100"
+                                          className="w-10 bg-transparent text-center border-b border-transparent hover:border-[#babecc]/60 focus:border-[#3b82f6] outline-none rounded py-0.5 text-xs text-[#4a5568] focus:text-[#2d3436]"
+                                          defaultValue={subjVals.n4 !== undefined ? subjVals.n4 : 0}
+                                          onBlur={async (e) => {
+                                            const newVal = parseInt(e.target.value) || 0;
+                                            if (newVal !== subjVals.n4) {
+                                              const updatedSubjVals = { ...subjVals, n4: newVal };
+                                              const updatedNilai = {
+                                                ...customItemVals,
+                                                [subj]: updatedSubjVals
+                                              };
+                                              let totalSum = 0;
+                                              katalogSubjects.forEach((s) => {
+                                                let sVals = updatedNilai[s];
+                                                if (typeof sVals !== "object" || sVals === null) {
+                                                  sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0, n4: 0 };
+                                                }
+                                                totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0) + (sVals.n4 || 0)) / 4;
+                                              });
+                                              const finalRata = katalogSubjects.length > 0 ? parseFloat((totalSum / katalogSubjects.length).toFixed(1)) : 0;
+                                              try {
+                                                await gradesHelper.updateGrade(user.id, item.id, {
+                                                  nilai: JSON.stringify(updatedNilai),
+                                                  rata: finalRata
+                                                });
+                                                const updatedGrades = grades.map((g) => g.id === item.id ? { ...g, nilai: JSON.stringify(updatedNilai), rata: finalRata } : g);
+                                                setGrades(updatedGrades);
+                                                showToast(`Nilai 4 ${subj} berhasil diperbarui!`, "success");
+                                              } catch (err) {
+                                                showToast("Gagal memperbarui nilai: " + err.message, "error");
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </td>
                                     </React.Fragment>
                                   );
                                 })}
@@ -1955,9 +2092,9 @@ export default function DashboardApp() {
                                     katalogSubjects.forEach((s) => {
                                       let sVals = customItemVals[s];
                                       if (typeof sVals !== "object" || sVals === null) {
-                                        sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0 };
+                                        sVals = { n1: parseFloat(sVals) || 0, n2: 0, n3: 0, n4: 0 };
                                       }
-                                      totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0)) / 3;
+                                      totalSum += ((sVals.n1 || 0) + (sVals.n2 || 0) + (sVals.n3 || 0) + (sVals.n4 || 0)) / 4;
                                     });
                                     return parseFloat(totalSum.toFixed(1));
                                   })()}
